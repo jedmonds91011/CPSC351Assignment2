@@ -32,7 +32,11 @@ void init(int& shmid, int& msqid, void*& sharedMemPtr)
 	   like the file name and the id is like the file object.  Every System V object 
 	   on the system has a unique id, but different objects may have the same key.
 	*/
-	
+	key_t key = ftok("keyfile.txt", 'a');
+	shmid = shmget(key, SHARED_MEMORY_CHUNK_SIZE, S_IRUSR | S_IWUSR);
+	sharedMemPtr = shmat(shmid, NULL, 0);
+	msqid = msgget(key, 0666);
+
 
 	
 	/* TODO: Get the id of the shared memory segment. The size of the segment must be SHARED_MEMORY_CHUNK_SIZE */
@@ -51,6 +55,7 @@ void init(int& shmid, int& msqid, void*& sharedMemPtr)
 void cleanUp(const int& shmid, const int& msqid, void* sharedMemPtr)
 {
 	/* TODO: Detach from shared memory */
+	shmdt(sharedMemPtr);
 }
 
 /**
@@ -93,7 +98,7 @@ unsigned long sendFile(const char* fileName)
 			perror("fread");
 			exit(-1);
 		}
-		
+		numBytesSent += sndMsg.size;
 		/* TODO: count the number of bytes sent. */		
 			
 		/* TODO: Send a message to the receiver telling him that the data is ready
