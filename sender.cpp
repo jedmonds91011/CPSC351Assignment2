@@ -98,17 +98,24 @@ unsigned long sendFile(const char* fileName)
 			perror("fread");
 			exit(-1);
 		}
-		numBytesSent += sndMsg.size;
+		
 		/* TODO: count the number of bytes sent. */		
-
+		numBytesSent += sndMsg.size;
+			
 			
 		/* TODO: Send a message to the receiver telling him that the data is ready
  		 * to be read (message of type SENDER_DATA_TYPE).
  		 */
+		message sentMessage;
+		sentMessage.mType = SENDER_DATA_TYPE;
+		msgsnd(msqid, &sentMessage, sizeof(message) - sizeof(long));
 		
 		/* TODO: Wait until the receiver sends us a message of type RECV_DONE_TYPE telling us 
  		 * that he finished saving a chunk of memory. 
  		 */
+		key_t key = ftok("keyfile.txt", 'a');
+		ackMessage acknowledged;
+		msgrcv(msqid, &acknowledged, sizeof(ackMessage) - sizeof(long), RECV_DONE_TYPE, 0);
 	}
 	
 
@@ -116,6 +123,11 @@ unsigned long sendFile(const char* fileName)
  	  * Lets tell the receiver that we have nothing more to send. We will do this by
  	  * sending a message of type SENDER_DATA_TYPE with size field set to 0. 	
 	  */
+	message doneMessage;
+	doneMessage.mtype = SENDER_DATA_TYPE;
+	doneMessage.size = 0;
+
+	msgsnd(msqid, &doneMessage, sizeof(message) - sizeof(long));
 
 		
 	/* Close the file */
@@ -142,7 +154,7 @@ void sendFileName(const char* fileName)
 	fileNameMsg nameMsg;
 	nameMsg.fileName = fileName;
 	nameMsg.mType = FILE_NAME_TRANSFER_TYPE;
-	msgsnd(msqid, &nameMsg, sizeof(nameMsg) - sizeof(long));
+	msgsnd(msqid, &nameMsg, sizeof(fileNameMsg) - sizeof(long));
 
 	/* TODO: Make sure the file name does not exceed 
 	 * the maximum buffer size in the fileNameMsg
