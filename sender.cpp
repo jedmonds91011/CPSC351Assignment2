@@ -32,7 +32,11 @@ void init(int& shmid, int& msqid, void*& sharedMemPtr)
 	   like the file name and the id is like the file object.  Every System V object 
 	   on the system has a unique id, but different objects may have the same key.
 	*/
-	
+	key_t key = ftok("keyfile.txt", 'a');
+	shmid = shmget(key, SHARED_MEMORY_CHUNK_SIZE, S_IRUSR | S_IWUSR);
+	sharedMemPtr = shmat(shmid, NULL, 0);
+	msqid = msgget(key, 0666);
+
 
 	
 	/* TODO: Get the id of the shared memory segment. The size of the segment must be SHARED_MEMORY_CHUNK_SIZE */
@@ -51,6 +55,7 @@ void init(int& shmid, int& msqid, void*& sharedMemPtr)
 void cleanUp(const int& shmid, const int& msqid, void* sharedMemPtr)
 {
 	/* TODO: Detach from shared memory */
+	shmdt(sharedMemPtr);
 }
 
 /**
@@ -93,10 +98,10 @@ unsigned long sendFile(const char* fileName)
 			perror("fread");
 			exit(-1);
 		}
-		
-		/*  count the number of bytes sent. */		
-		numBytesSent += sndMsg.size
+		numBytesSent += sndMsg.size;
+		/* TODO: count the number of bytes sent. */		
 
+			
 		/* TODO: Send a message to the receiver telling him that the data is ready
  		 * to be read (message of type SENDER_DATA_TYPE).
  		 */
@@ -130,6 +135,17 @@ void sendFileName(const char* fileName)
 {
 	/* Get the length of the file name */
 	int fileNameSize = strlen(fileName);
+
+	if (fileNameSize > MAX_FILE_NAME_SIZE)
+	{
+		perror("File name excedes max length");
+		exit(-1);
+	}
+
+	fileNameMsg nameMsg;
+	nameMsg.fileName = fileName;
+	nameMsg.mType = FILE_NAME_TRANSFER_TYPE;
+	msgsnd(msqid, &nameMsg, sizeof(nameMsg) - sizeof(long));
 
 	/* TODO: Make sure the file name does not exceed 
 	 * the maximum buffer size in the fileNameMsg
