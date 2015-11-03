@@ -100,6 +100,7 @@ unsigned long sendFile(const char* fileName)
 		}
 		numBytesSent += sndMsg.size;
 		/* TODO: count the number of bytes sent. */		
+
 			
 		/* TODO: Send a message to the receiver telling him that the data is ready
  		 * to be read (message of type SENDER_DATA_TYPE).
@@ -131,6 +132,17 @@ void sendFileName(const char* fileName)
 {
 	/* Get the length of the file name */
 	int fileNameSize = strlen(fileName);
+
+	if (fileNameSize > MAX_FILE_NAME_SIZE)
+	{
+		perror("File name excedes max length");
+		exit(-1);
+	}
+
+	fileNameMsg nameMsg;
+	nameMsg.fileName = fileName;
+	nameMsg.mType = FILE_NAME_TRANSFER_TYPE;
+	msgsnd(msqid, &nameMsg, sizeof(nameMsg) - sizeof(long));
 
 	/* TODO: Make sure the file name does not exceed 
 	 * the maximum buffer size in the fileNameMsg
