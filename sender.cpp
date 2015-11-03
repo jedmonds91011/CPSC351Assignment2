@@ -108,7 +108,7 @@ unsigned long sendFile(const char* fileName)
  		 */
 		message sentMessage;
 		sentMessage.mType = SENDER_DATA_TYPE;
-		msgsnd(msqid, &sentMessage, sizeof(message) - sizeof(long));
+		msgsnd(shmid, msqid, &sentMessage, sizeof(message) - sizeof(long), NULL);
 		
  		 
 		
@@ -155,8 +155,8 @@ void sendFileName(const char* fileName)
 
 	fileNameMsg nameMsg;
 	nameMsg.fileName = fileName;
-	nameMsg.mType = FILE_NAME_TRANSFER_TYPE;
-	msgsnd(msqid, &nameMsg, sizeof(fileNameMsg) - sizeof(long));
+	nameMsg.mtype = FILE_NAME_TRANSFER_TYPE;
+	msgsnd(msqid, &nameMsg, sizeof(fileNameMsg) - sizeof(long), NULL);
 
 	/* TODO: Make sure the file name does not exceed 
 	 * the maximum buffer size in the fileNameMsg
