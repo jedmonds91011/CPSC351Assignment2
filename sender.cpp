@@ -94,15 +94,19 @@ unsigned long sendFile(const char* fileName)
 			exit(-1);
 		}
 		
-		/* TODO: count the number of bytes sent. */		
-			
+		/*  count the number of bytes sent. */		
+		numBytesSent += sndMsg.size
+
 		/* TODO: Send a message to the receiver telling him that the data is ready
  		 * to be read (message of type SENDER_DATA_TYPE).
  		 */
 		
+ 		 
+		
 		/* TODO: Wait until the receiver sends us a message of type RECV_DONE_TYPE telling us 
  		 * that he finished saving a chunk of memory. 
  		 */
+
 	}
 	
 
