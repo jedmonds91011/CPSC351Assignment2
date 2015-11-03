@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string.h>
+// for S_IRUSR and S_IWUSR flags, include sys/stat.h
+#include <sys/stat.h>
 #include "msg.h"    /* For the message struct */
 
 /* The size of the shared memory segment */
@@ -108,7 +110,7 @@ unsigned long sendFile(const char* fileName)
  		 */
 		message sentMessage;
 		sentMessage.mType = SENDER_DATA_TYPE;
-		msgsnd(shmid, msqid, &sentMessage, sizeof(message) - sizeof(long), NULL);
+		msgsnd(msqid, &sentMessage, sizeof(message) - sizeof(long), 0);
 		
  		 
 		
@@ -117,6 +119,7 @@ unsigned long sendFile(const char* fileName)
  		 */
 		key_t key = ftok("keyfile.txt", 'a');
 		ackMessage acknowledged;
+		// ssize_t msgrcv(int msqid, void *msgp, size_t msgsz, long msgtyp, int msgflg);
 		msgrcv(msqid, &acknowledged, sizeof(ackMessage) - sizeof(long), RECV_DONE_TYPE, 0);
 	}
 	
@@ -129,7 +132,8 @@ unsigned long sendFile(const char* fileName)
 	doneMessage.mtype = SENDER_DATA_TYPE;
 	doneMessage.size = 0;
 
-	msgsnd(msqid, &doneMessage, sizeof(message) - sizeof(long));
+	// int msgsnd(int msqid, const void *msgp, size_t msgsz, int msgflg);
+	msgsnd(msqid, &doneMessage, sizeof(message) - sizeof(long), 0);
 
 		
 	/* Close the file */
@@ -156,7 +160,7 @@ void sendFileName(const char* fileName)
 	fileNameMsg nameMsg;
 	nameMsg.fileName = fileName;
 	nameMsg.mtype = FILE_NAME_TRANSFER_TYPE;
-	msgsnd(msqid, &nameMsg, sizeof(fileNameMsg) - sizeof(long), NULL);
+	msgsnd(msqid, &nameMsg, sizeof(fileNameMsg) - sizeof(long), 0);
 
 	/* TODO: Make sure the file name does not exceed 
 	 * the maximum buffer size in the fileNameMsg
