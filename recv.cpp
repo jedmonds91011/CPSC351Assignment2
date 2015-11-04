@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <string>
+#include <sys/stat.h>
 #include "msg.h"    /* For the message struct */
 
 using namespace std;
@@ -18,6 +19,9 @@ int shmid, msqid;
 /* The pointer to the shared memory */
 void *sharedMemPtr = NULL;
 
+// count for signal handler 
+count = 1;
+
 
 /**
  * The function for receiving the name of the file
@@ -26,17 +30,26 @@ void *sharedMemPtr = NULL;
 string recvFileName()
 {
 	/* The file name received from the sender */
-	string fileName;
+	string fileName; 
         
-	/* TODO: declare an instance of the fileNameMsg struct to be
+	/* : declare an instance of the fileNameMsg struct to be
 	 * used for holding the message received from the sender.
-         */
+    */
 
-        /* TODO: Receive the file name using msgrcv() */
+	fileNameMsg nameMsg;
 	
-	/* TODO: return the received file name */
+    /*: Receive the file name using msgrcv() */
+	if(msgrcv(msqid, &nameMsg, sizeof(nameMsg) - sizeof(long), FILE_NAME_TRANSFER_TYPE, 0)<0)
+	{
+		perror("msgsnd");
+		exit(-1);
+	}
 	
-        return fileName;
+	strcpy(fileName,nameMsg.fileName);
+	
+	/* : return the received file name */
+	
+    return fileName;
 }
  /**
  * Sets up the shared memory segment and message queue
@@ -47,7 +60,7 @@ string recvFileName()
 void init(int& shmid, int& msqid, void*& sharedMemPtr)
 {
 	
-	/* TODO: 
+	/* : 
         1. Create a file called keyfile.txt containing string "Hello world" (you may do
  	    so manually or from the code).
 	2. Use ftok("keyfile.txt", 'a') in order to generate the key.
@@ -59,12 +72,38 @@ void init(int& shmid, int& msqid, void*& sharedMemPtr)
 	*/
 	
 
-	/* TODO: Allocate a shared memory segment. The size of the segment must be SHARED_MEMORY_CHUNK_SIZE. */
+	/* : Allocate a shared memory segment. The size of the segment must be SHARED_MEMORY_CHUNK_SIZE. */
+	key_t key = ftok("keyfile.txt", 'a');
+		if(key < 0)
+	{
+		perror("ftok");
+		exit(-1);
+	}
+	shmid = shmget(key, SHARED_MEMORY_CHUNK_SIZE, IPC_CREAT | IPC_EXCL | S_IRUSR | S_IWUSR);
+		if(shmid < 0)
+	{
+		perror("shmget");
+		exit(-1);
+	}
 	
-	/* TODO: Attach to the shared memory */
+	/* : Attach to the shared memory */
+	 sharedMemPtr = shmat(shmid, NULL, 0);
+	 
+	 /*  Error checks */
+	if(((void*)sharedMemPtr) < 0)
+	{
+		perror("shmat");
+		exit(-1); 
+	}
 	
-	/* TODO: Create a message queue */
-	
+	/* : Create a message queue */
+	 msqid = msgget(key, 0666 | IPC_CREAT);
+	 	if(msqid < 0)
+	{
+		perror("msgget");
+		exit(-1);
+	}
+	  
 	/* TODO: Store the IDs and the pointer to the shared memory region in the corresponding parameters */
 	
 }
@@ -87,6 +126,9 @@ unsigned long mainLoop(const char* fileName)
 	string recvFileNameStr = fileName;
 	
 	/* TODO: append __recv to the end of file name */
+	string appendStr = "__recv";
+	
+	fileName = strcat(recvFileNameStr, appendStr );
 	
 	/* Open the file for writing */
 	FILE* fp = fopen(recvFileNameStr.c_str(), "w");
@@ -105,7 +147,7 @@ unsigned long mainLoop(const char* fileName)
 	while(msgSize != 0)
 	{	
 
-		/* TODO: Receive the message and get the value of the size field. The message will be of 
+		/* : Receive the message and get the value of the size field. The message will be of 
 		 * of type SENDER_DATA_TYPE. That is, a message that is an instance of the message struct with 
 		 * mtype field set to SENDER_DATA_TYPE (the macro SENDER_DATA_TYPE is defined in 
 		 * msg.h).  If the size field of the message is not 0, then we copy that many bytes from 
@@ -116,11 +158,15 @@ unsigned long mainLoop(const char* fileName)
 		 * <ORIGINAL FILENAME__recv>. For example, if the name of the original
 		 * file is song.mp3, the name of the received file is going to be song.mp3__recv.
 		 */
-		
+		message rcvMsg;
+		msgrcv(msqid, &rcvMsg, sizeof(message) - sizeof(long), SENDER_DATA_TYPE, 0);
+		strcpy(msgSize, rcvMsg.size);
+
 		/* If the sender is not telling us that we are done, then get to work */
 		if(msgSize != 0)
 		{
 			/* TODO: count the number of bytes received */
+			numBytesRecv += msgSize
 			
 			/* Save the shared memory to file */
 			if(fwrite(sharedMemPtr, sizeof(char), msgSize, fp) < 0)
@@ -128,10 +174,13 @@ unsigned long mainLoop(const char* fileName)
 				perror("fwrite");
 			}
 			
-			/* TODO: Tell the sender that we are ready for the next set of bytes. 
+			/* : Tell the sender that we are ready for the next set of bytes. 
  			 * I.e., send a message of type RECV_DONE_TYPE. That is, a message
 			 * of type ackMessage with mtype field set to RECV_DONE_TYPE. 
  			 */
+			ackMessage sndAckMessage;
+			sndAckMessage.mtype = RECV_DONE_TYPE;
+			msgsnd(msqid, &sndAckMessage, sizeof(ackMessage) - sizeof(long), 0);
 		}
 		/* We are done */
 		else
@@ -154,11 +203,15 @@ unsigned long mainLoop(const char* fileName)
  */
 void cleanUp(const int& shmid, const int& msqid, void* sharedMemPtr)
 {
-	/* TODO: Detach from shared memory */
+	/*: Detach from shared memory */
+	shmdt(sharedMemPtr);
 	
-	/* TODO: Deallocate the shared memory segment */
-	
-	/* TODO: Deallocate the message queue */
+	/*: Deallocate the shared memory segment */
+	shmdctl(shmid, IPC_RMID);
+
+	/*: Deallocate the message queue */
+	msgctl(msqid, IPC_RMID, NULL);
+
 }
 
 /**
@@ -171,15 +224,28 @@ void ctrlCSignal(int signal)
 	cleanUp(shmid, msqid, sharedMemPtr);
 }
 
+/* signal handling function */
+
+void signalHandlerFunc(int arg)
+{
+	/* We can take more Ctrl-Cs */
+	if(count > 0)
+	{	ctrlCSignal (arg);
+		fprintf(stderr, "Deallocated the shared memory and message queue\n", count);
+		exit(0);
+	}
+	 
+	--count;
+}
 int main(int argc, char** argv)
 {
 	
-	/* TODO: Install a signal handler (see signaldemo.cpp sample file).
+	/* : Install a signal handler (see signaldemo.cpp sample file).
  	 * If user presses Ctrl-c, your program should delete the message
  	 * queue and the shared memory segment before exiting. You may add 
 	 * the cleaning functionality in ctrlCSignal().
  	 */
-				
+	signal(SIGINT, signalHandlerFunc);
 	/* Initialize */
 	init(shmid, msqid, sharedMemPtr);
 	
@@ -189,9 +255,9 @@ int main(int argc, char** argv)
 	/* Go to the main loop */
 	fprintf(stderr, "The number of bytes received is: %lu\n", mainLoop(fileName.c_str()));
 
-	/* TODO: Detach from shared memory segment, and deallocate shared memory 
+	/*: Detach from shared memory segment, and deallocate shared memory 
 	 * and message queue (i.e. call cleanup) 
 	 */
-		
+	cleanUp(shmid, msqid, sharedMemPtr);
 	return 0;
 }
