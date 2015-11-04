@@ -6,6 +6,7 @@
 #include <string.h>
 // for S_IRUSR and S_IWUSR flags, include sys/stat.h
 #include <sys/stat.h>
+#include <cstring>
 #include "msg.h"    /* For the message struct */
 
 /* The size of the shared memory segment */
@@ -109,7 +110,7 @@ unsigned long sendFile(const char* fileName)
  		 * to be read (message of type SENDER_DATA_TYPE).
  		 */
 		message sentMessage;
-		sentMessage.mType = SENDER_DATA_TYPE;
+		sentMessage.mtype = SENDER_DATA_TYPE;
 		msgsnd(msqid, &sentMessage, sizeof(message) - sizeof(long), 0);
 		
  		 
@@ -158,7 +159,10 @@ void sendFileName(const char* fileName)
 	}
 
 	fileNameMsg nameMsg;
-	nameMsg.fileName = fileName;
+	// nameMsg.fileName = fileName;
+	// can't just assign to a char array from a char* c-string
+	// must strcpy it over
+	strcpy(nameMsg.fileName, fileName);
 	nameMsg.mtype = FILE_NAME_TRANSFER_TYPE;
 	msgsnd(msqid, &nameMsg, sizeof(fileNameMsg) - sizeof(long), 0);
 
