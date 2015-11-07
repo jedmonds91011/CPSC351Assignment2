@@ -1,3 +1,5 @@
+# ignore the mp3 file i'm using
+EP346*
 # ignore executables
 sender
 recv

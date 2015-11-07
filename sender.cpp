@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <cstring>
 #include "msg.h"    /* For the message struct */
+#include <iostream>
 
 /* The size of the shared memory segment */
 #define SHARED_MEMORY_CHUNK_SIZE 1000
@@ -25,7 +26,7 @@ void* sharedMemPtr;
  */
 void init(int& shmid, int& msqid, void*& sharedMemPtr)
 {
-	/* TODO: 
+	/*  
         1. Create a file called keyfile.txt containing string "Hello world" (you may do
  	    so manually or from the code).
 	2. Use ftok("keyfile.txt", 'a') in order to generate the key.
@@ -35,17 +36,21 @@ void init(int& shmid, int& msqid, void*& sharedMemPtr)
 	   like the file name and the id is like the file object.  Every System V object 
 	   on the system has a unique id, but different objects may have the same key.
 	*/
+
+	/* Get the id of the shared memory segment. The size of the segment must be SHARED_MEMORY_CHUNK_SIZE */
 	key_t key = ftok("keyfile.txt", 'a');
+
+	/* Attach to the shared memory */
 	shmid = shmget(key, SHARED_MEMORY_CHUNK_SIZE, S_IRUSR | S_IWUSR);
+
+	/* Attach to the message queue */
 	sharedMemPtr = shmat(shmid, NULL, 0);
+
+	/* Store the IDs and the pointer to the shared memory region in the corresponding function parameters */
 	msqid = msgget(key, 0666);
 
 
 	
-	/* TODO: Get the id of the shared memory segment. The size of the segment must be SHARED_MEMORY_CHUNK_SIZE */
-	/* TODO: Attach to the shared memory */
-	/* TODO: Attach to the message queue */
-	/* Store the IDs and the pointer to the shared memory region in the corresponding function parameters */
 	
 }
 
@@ -152,34 +157,34 @@ void sendFileName(const char* fileName)
 	/* Get the length of the file name */
 	int fileNameSize = strlen(fileName);
 
+	/* Make sure the file name does not exceed 
+	 * the maximum buffer size in the fileNameMsg
+	 * struct. If exceeds, then terminate with an error.
+	 */
 	if (fileNameSize > MAX_FILE_NAME_SIZE)
 	{
 		perror("File name excedes max length");
 		exit(-1);
 	}
 
-	fileNameMsg nameMsg;
-	// nameMsg.fileName = fileName;
-	// can't just assign to a char array from a char* c-string
-	// must strcpy it over
-	strcpy(nameMsg.fileName, fileName);
-	nameMsg.mtype = FILE_NAME_TRANSFER_TYPE;
-	msgsnd(msqid, &nameMsg, sizeof(fileNameMsg) - sizeof(long), 0);
-
-	/* TODO: Make sure the file name does not exceed 
-	 * the maximum buffer size in the fileNameMsg
-	 * struct. If exceeds, then terminate with an error.
-	 */
-
-	/* TODO: Create an instance of the struct representing the message
+	/* Create an instance of the struct representing the message
 	 * containing the name of the file.
 	 */
+	fileNameMsg nameMsg;
 
-	/* TODO: Set the message type FILE_NAME_TRANSFER_TYPE */
+	/* Set the file name in the message */
+	strcpy(nameMsg.fileName, fileName);
+	/* Set the message type FILE_NAME_TRANSFER_TYPE */
+	nameMsg.mtype = FILE_NAME_TRANSFER_TYPE;
+	/* Send the message using msgsnd */
+	std::cout << "sending a message..." << std::endl;
+	// starting 'sender' without recv running crashes here
+	msgsnd(msqid, &nameMsg, sizeof(fileNameMsg) - sizeof(long), 0);
 
-	/* TODO: Set the file name in the message */
 
-	/* TODO: Send the message using msgsnd */
+
+
+
 }
 
 
@@ -194,9 +199,11 @@ int main(int argc, char** argv)
 	}
 		
 	/* Connect to shared memory and the message queue */
+	std::cout << "connecting..." << std::endl;
 	init(shmid, msqid, sharedMemPtr);
 	
 	/* Send the name of the file */
+	std::cout << "sending file..." << std::endl;
         sendFileName(argv[1]);
 		
 	/* Send the file */
