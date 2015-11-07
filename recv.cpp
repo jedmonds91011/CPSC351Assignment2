@@ -210,7 +210,7 @@ void cleanUp(const int& shmid, const int& msqid, void* sharedMemPtr)
 	
 	/*: Deallocate the shared memory segment */
 	// needs three params
-	shmctl(shmid, IPC_RMID);
+	shmctl(shmid, IPC_RMID, NULL);
 
 	/*: Deallocate the message queue */
 	msgctl(msqid, IPC_RMID, NULL);
@@ -234,7 +234,7 @@ void signalHandlerFunc(int arg)
 	/* We can take more Ctrl-Cs */
 	if(count > 0)
 	{	ctrlCSignal (arg);
-		fprintf(stderr, "Deallocated the shared memory and message queue\n", count);
+		fprintf(stderr, "Deallocated the shared memory and message queue\n");
 		exit(0);
 	}
 	 
