@@ -1,6 +1,7 @@
 # ignore executables
 sender
 recv
+*.o
 
 # Windows image file caches
 Thumbs.db

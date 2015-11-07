@@ -6,6 +6,7 @@
 #include <unistd.h>
 #include <string>
 #include <sys/stat.h>
+#include <cstring>
 #include "msg.h"    /* For the message struct */
 
 using namespace std;
@@ -20,7 +21,7 @@ int shmid, msqid;
 void *sharedMemPtr = NULL;
 
 // count for signal handler 
-count = 1;
+int count = 1;
 
 
 /**
@@ -45,7 +46,7 @@ string recvFileName()
 		exit(-1);
 	}
 	
-	strcpy(fileName,nameMsg.fileName);
+	fileName = string(nameMsg.fileName);
 	
 	/* : return the received file name */
 	
@@ -123,12 +124,12 @@ unsigned long mainLoop(const char* fileName)
 	int numBytesRecv = 0;
 	
 	/* The string representing the file name received from the sender */
-	string recvFileNameStr = fileName;
+	string recvFileNameStr = string(fileName);
 	
-	/* TODO: append __recv to the end of file name */
+	/* append __recv to the end of file name */
 	string appendStr = "__recv";
 	
-	fileName = strcat(recvFileNameStr, appendStr );
+	recvFileNameStr += appendStr;
 	
 	/* Open the file for writing */
 	FILE* fp = fopen(recvFileNameStr.c_str(), "w");
@@ -160,13 +161,14 @@ unsigned long mainLoop(const char* fileName)
 		 */
 		message rcvMsg;
 		msgrcv(msqid, &rcvMsg, sizeof(message) - sizeof(long), SENDER_DATA_TYPE, 0);
-		strcpy(msgSize, rcvMsg.size);
+		// msgSize is an int. Why are we trying to copy a string into it?
+		// strcpy(msgSize, rcvMsg.size);
 
 		/* If the sender is not telling us that we are done, then get to work */
 		if(msgSize != 0)
 		{
 			/* TODO: count the number of bytes received */
-			numBytesRecv += msgSize
+			numBytesRecv += msgSize;
 			
 			/* Save the shared memory to file */
 			if(fwrite(sharedMemPtr, sizeof(char), msgSize, fp) < 0)
@@ -207,7 +209,8 @@ void cleanUp(const int& shmid, const int& msqid, void* sharedMemPtr)
 	shmdt(sharedMemPtr);
 	
 	/*: Deallocate the shared memory segment */
-	shmdctl(shmid, IPC_RMID);
+	// needs three params
+	shmctl(shmid, IPC_RMID);
 
 	/*: Deallocate the message queue */
 	msgctl(msqid, IPC_RMID, NULL);
