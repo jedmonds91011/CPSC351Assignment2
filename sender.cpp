@@ -196,7 +196,7 @@ int main(int argc, char** argv)
 	bool debug = false;
 	
 	/* Check the command line arguments */
-	if (globalFilename != NULL) {
+	if (argc == 1) {
 		std::cout << "Running in debug mode" << std::endl;
 		debug = true;
 	}
@@ -215,6 +215,9 @@ int main(int argc, char** argv)
 
 	// during debug, provide filename as global variable
 	if (debug){
+		// don't know how to pass a param to gdb, so using a 'canned' filename if started with no params
+		// Maybe should also test if prog is called 'sender_debug'
+		std::cout << "opening global filename file" << std::endl;
 		sendFileName(globalFilename);
 	} else {
     	sendFileName(argv[1]);

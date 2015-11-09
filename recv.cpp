@@ -8,6 +8,7 @@
 #include <sys/stat.h>
 #include <cstring>
 #include "msg.h"    /* For the message struct */
+#include <iostream>
 
 using namespace std;
 
@@ -86,6 +87,9 @@ void init(int& shmid, int& msqid, void*& sharedMemPtr)
 		perror("shmget");
 		exit(-1);
 	}
+
+	// print shared memory id, so I can kill it when this thing breaks
+	std::cout << "shmid: " << shmid << std::endl;
 	
 	/* : Attach to the shared memory */
 	 sharedMemPtr = shmat(shmid, NULL, 0);
