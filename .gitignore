@@ -6,6 +6,10 @@ sender
 recv
 *.o
 
+# ignore tarballs
+*.tar
+*.tar.gz
+
 # ignore debug versions
 recv_debug
 sender_debug
