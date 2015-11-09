@@ -5,6 +5,10 @@ sender
 recv
 *.o
 
+# ignore debug versions
+recv_debug
+sender_debug
+
 # Windows image file caches
 Thumbs.db
 ehthumbs.db

@@ -1,5 +1,7 @@
 all:	sender recv
 
+debug:  send_debug recv_debug
+
 sender:	sender.o
 	g++ sender.o -o sender
 
@@ -12,6 +14,18 @@ sender.o:	 sender.cpp
 recv.o:	recv.cpp
 	g++ -c recv.cpp
 
+send_debug:	sender.o
+	g++ sender.o -o sender_debug
+
+recv_debug:	recv.o
+	g++ recv.o -o recv_debug
+
+sender_debug.o:	 sender.cpp
+	g++ -Wall -g -c sender.cpp
+
+recv_debug.o:	recv.cpp
+	g++ -Wall -g -c recv.cpp 
+
 
 clean:
-	rm -rf *.o sender recv 
+	rm -rf *.o sender recv recv_debug sender_debug
