@@ -19,6 +19,9 @@ int shmid, msqid;
 /* The pointer to the shared memory */
 void* sharedMemPtr;
 
+// for debugging, give filename as global variable
+char globalFilename[] = "The_LaTeX_Companion.pdf";
+
 /**
  * Sets up the shared memory segment and message queue
  * @param shmid - the id of the allocated shared memory 
@@ -190,9 +193,14 @@ void sendFileName(const char* fileName)
 
 int main(int argc, char** argv)
 {
+	bool debug = false;
 	
 	/* Check the command line arguments */
-	if(argc < 2)
+	if (globalFilename != NULL) {
+		std::cout << "Running in debug mode" << std::endl;
+		debug = true;
+	}
+	else if(argc < 2)
 	{
 		fprintf(stderr, "USAGE: %s <FILE NAME>\n", argv[0]);
 		exit(-1);
@@ -204,8 +212,14 @@ int main(int argc, char** argv)
 	
 	/* Send the name of the file */
 	std::cout << "sending file..." << std::endl;
-        sendFileName(argv[1]);
-		
+
+	// during debug, provide filename as global variable
+	if (debug){
+		sendFileName(globalFilename);
+	} else {
+    	sendFileName(argv[1]);
+	}
+
 	/* Send the file */
 	fprintf(stderr, "The number of bytes sent is %lu\n", sendFile(argv[1]));
 	
