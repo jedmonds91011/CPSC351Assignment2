@@ -89,6 +89,8 @@ void init(int& shmid, int& msqid, void*& sharedMemPtr)
 	}
 
 	// print shared memory id, so I can kill it when this thing breaks
+	// gdb is intercepting Ctrl-C signal, so sometimes process doesn't 
+	// finish normally.
 	std::cout << "shmid: " << shmid << std::endl;
 	
 	/* : Attach to the shared memory */

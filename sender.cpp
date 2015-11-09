@@ -19,9 +19,6 @@ int shmid, msqid;
 /* The pointer to the shared memory */
 void* sharedMemPtr;
 
-// for debugging, give filename as global variable
-char globalFilename[] = "The_LaTeX_Companion.pdf";
-
 /**
  * Sets up the shared memory segment and message queue
  * @param shmid - the id of the allocated shared memory 
@@ -96,6 +93,9 @@ unsigned long sendFile(const char* fileName)
 		exit(-1);
 	}
 	
+	key_t key = ftok("keyfile.txt", 'a');
+
+
 	/* Read the whole file */
 	while(!feof(fp))
 	{
@@ -123,10 +123,9 @@ unsigned long sendFile(const char* fileName)
 		
  		 
 		
-		/* TODO: Wait until the receiver sends us a message of type RECV_DONE_TYPE telling us 
+		/* Wait until the receiver sends us a message of type RECV_DONE_TYPE telling us 
  		 * that he finished saving a chunk of memory. 
  		 */
-		key_t key = ftok("keyfile.txt", 'a');
 		ackMessage acknowledged;
 		// ssize_t msgrcv(int msqid, void *msgp, size_t msgsz, long msgtyp, int msgflg);
 		msgrcv(msqid, &acknowledged, sizeof(ackMessage) - sizeof(long), RECV_DONE_TYPE, 0);
@@ -175,26 +174,31 @@ void sendFileName(const char* fileName)
 	 */
 	fileNameMsg nameMsg;
 
+	std::cout << "In sendFileName()" << std::endl;
+
 	/* Set the file name in the message */
 	strcpy(nameMsg.fileName, fileName);
+
 	/* Set the message type FILE_NAME_TRANSFER_TYPE */
 	nameMsg.mtype = FILE_NAME_TRANSFER_TYPE;
+
 	/* Send the message using msgsnd */
 	std::cout << "sending a message..." << std::endl;
+
 	// starting 'sender' without recv running crashes here
 	msgsnd(msqid, &nameMsg, sizeof(fileNameMsg) - sizeof(long), 0);
 
-
-
-
-
+	std::cout << "filenmae message has been sent" << std::endl;
 }
 
 
 int main(int argc, char** argv)
 {
 	bool debug = false;
-	
+	// for debugging, give filename as global variable
+	std::string globalFilename = "The_LaTeX_Companion.pdf";
+
+
 	/* Check the command line arguments */
 	if (argc == 1) {
 		std::cout << "Running in debug mode" << std::endl;
@@ -218,14 +222,19 @@ int main(int argc, char** argv)
 		// don't know how to pass a param to gdb, so using a 'canned' filename if started with no params
 		// Maybe should also test if prog is called 'sender_debug'
 		std::cout << "opening global filename file" << std::endl;
-		sendFileName(globalFilename);
+		sendFileName(globalFilename.c_str());
 	} else {
     	sendFileName(argv[1]);
 	}
 
 	/* Send the file */
-	fprintf(stderr, "The number of bytes sent is %lu\n", sendFile(argv[1]));
-	
+	if (debug) {
+		std::cout << "In debug mode, transferring from " << globalFilename << " file." << std::endl;
+		fprintf(stderr, "The number of bytes sent is %lu\n", sendFile(globalFilename.c_str()));
+
+	} else {
+		fprintf(stderr, "The number of bytes sent is %lu\n", sendFile(argv[1]));
+	}
 	/* Cleanup */
 	cleanUp(shmid, msqid, sharedMemPtr);
 		
