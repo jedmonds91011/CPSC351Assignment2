@@ -41,7 +41,7 @@ string recvFileName()
 	fileNameMsg nameMsg;
 	
     /*: Receive the file name using msgrcv() */
-	if(msgrcv(msqid, &nameMsg, sizeof(nameMsg) - sizeof(long), FILE_NAME_TRANSFER_TYPE, 0)<0)
+	if(msgrcv(msqid, &nameMsg, sizeof(fileNameMsg) - sizeof(long), FILE_NAME_TRANSFER_TYPE, 0)<0)
 	{
 		perror("msgsnd");
 		exit(-1);
@@ -62,8 +62,8 @@ string recvFileName()
 void init(int& shmid, int& msqid, void*& sharedMemPtr)
 {
 	
-	/* : 
-        1. Create a file called keyfile.txt containing string "Hello world" (you may do
+	/*  
+    1. Create a file called keyfile.txt containing string "Hello world" (you may do
  	    so manually or from the code).
 	2. Use ftok("keyfile.txt", 'a') in order to generate the key.
 	3. Use will use this key in the TODO's below. Use the same key for the queue
@@ -103,7 +103,7 @@ void init(int& shmid, int& msqid, void*& sharedMemPtr)
 		exit(-1); 
 	}
 	
-	/* : Create a message queue */
+	/* Create a message queue */
 	 msqid = msgget(key, 0666 | IPC_CREAT);
 	 	if(msqid < 0)
 	{
@@ -154,7 +154,7 @@ unsigned long mainLoop(const char* fileName)
 	while(msgSize != 0)
 	{	
 
-		/* : Receive the message and get the value of the size field. The message will be of 
+		/* Receive the message and get the value of the size field. The message will be of 
 		 * of type SENDER_DATA_TYPE. That is, a message that is an instance of the message struct with 
 		 * mtype field set to SENDER_DATA_TYPE (the macro SENDER_DATA_TYPE is defined in 
 		 * msg.h).  If the size field of the message is not 0, then we copy that many bytes from 
@@ -182,7 +182,7 @@ unsigned long mainLoop(const char* fileName)
 				perror("fwrite");
 			}
 			
-			/* : Tell the sender that we are ready for the next set of bytes. 
+			/* Tell the sender that we are ready for the next set of bytes. 
  			 * I.e., send a message of type RECV_DONE_TYPE. That is, a message
 			 * of type ackMessage with mtype field set to RECV_DONE_TYPE. 
  			 */

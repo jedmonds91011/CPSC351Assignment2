@@ -27,7 +27,7 @@ void* sharedMemPtr;
 void init(int& shmid, int& msqid, void*& sharedMemPtr)
 {
 	/*  
-        1. Create a file called keyfile.txt containing string "Hello world" (you may do
+    1. Create a file called keyfile.txt containing string "Hello world" (you may do
  	    so manually or from the code).
 	2. Use ftok("keyfile.txt", 'a') in order to generate the key.
 	3. Use will use this key in the TODO's below. Use the same key for the queue
@@ -150,7 +150,7 @@ unsigned long sendFile(const char* fileName)
 	return numBytesSent;
 }
 
-/**
+/*
  * Used to send the name of the file to the receiver
  * @param fileName - the name of the file to send
  */
