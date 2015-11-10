@@ -47,11 +47,11 @@ string recvFileName()
 		exit(-1);
 	}
 	
-	fileName = string(nameMsg.fileName);
+	//fileName = string(nameMsg.fileName);
 	
 	/* : return the received file name */
 	
-    return fileName;
+    return nameMsg.fileName;
 }
  /**
  * Sets up the shared memory segment and message queue
@@ -130,12 +130,12 @@ unsigned long mainLoop(const char* fileName)
 	int numBytesRecv = 0;
 	
 	/* The string representing the file name received from the sender */
-	string recvFileNameStr = string(fileName);
+	string recvFileNameStr = fileName;
 	
 	/* append __recv to the end of file name */
-	string appendStr = "__recv";
+	//string appendStr = "__recv";
 	
-	recvFileNameStr += appendStr;
+	recvFileNameStr += "__recv";
 	
 	/* Open the file for writing */
 	FILE* fp = fopen(recvFileNameStr.c_str(), "w");
@@ -169,7 +169,10 @@ unsigned long mainLoop(const char* fileName)
 		msgrcv(msqid, &rcvMsg, sizeof(message) - sizeof(long), SENDER_DATA_TYPE, 0);
 		// msgSize is an int. Why are we trying to copy a string into it?
 		// strcpy(msgSize, rcvMsg.size);
-
+		
+		/* Copy the message size */
+		msgSize = rcvMsg.size;	
+		
 		/* If the sender is not telling us that we are done, then get to work */
 		if(msgSize != 0)
 		{

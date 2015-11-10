@@ -39,17 +39,25 @@ void init(int& shmid, int& msqid, void*& sharedMemPtr)
 
 	/* Get the id of the shared memory segment. The size of the segment must be SHARED_MEMORY_CHUNK_SIZE */
 	key_t key = ftok("keyfile.txt", 'a');
-
+	
+	//MIG: ERROR CHECK
+	
 	/* Attach to the shared memory */
 	shmid = shmget(key, SHARED_MEMORY_CHUNK_SIZE, S_IRUSR | S_IWUSR);
 
+	//MIG: ERROR CHECK
+
+	
 	/* Attach to the message queue */
 	sharedMemPtr = shmat(shmid, NULL, 0);
-
+	
+	
+	//MIG: ERROR CHECK
+	
 	/* Store the IDs and the pointer to the shared memory region in the corresponding function parameters */
 	msqid = msgget(key, 0666);
 
-
+	//MIG: ERROR CHECK
 	
 	
 }
@@ -83,6 +91,9 @@ unsigned long sendFile(const char* fileName)
 	/* The number of bytes sent */
 	unsigned long numBytesSent = 0;
 	
+	/* The sender's message */
+	message sentMessage;
+		
 	/* Open the file */
 	FILE* fp =  fopen(fileName, "r");
 
@@ -117,10 +128,9 @@ unsigned long sendFile(const char* fileName)
 		/* TODO: Send a message to the receiver telling him that the data is ready
  		 * to be read (message of type SENDER_DATA_TYPE).
  		 */
-		message sentMessage;
-		sentMessage.mtype = SENDER_DATA_TYPE;
-		msgsnd(msqid, &sentMessage, sizeof(message) - sizeof(long), 0);
-		
+		sndMsg.mtype = SENDER_DATA_TYPE;
+		msgsnd(msqid, &sndMsg, sizeof(message) - sizeof(long), 0);
+		//ERROR CHECK
  		 
 		
 		/* Wait until the receiver sends us a message of type RECV_DONE_TYPE telling us 
@@ -142,7 +152,7 @@ unsigned long sendFile(const char* fileName)
 
 	// int msgsnd(int msqid, const void *msgp, size_t msgsz, int msgflg);
 	msgsnd(msqid, &doneMessage, sizeof(message) - sizeof(long), 0);
-
+	//MIG: ERROR CHECK
 		
 	/* Close the file */
 	fclose(fp);
@@ -177,7 +187,7 @@ void sendFileName(const char* fileName)
 	std::cout << "In sendFileName()" << std::endl;
 
 	/* Set the file name in the message */
-	strcpy(nameMsg.fileName, fileName);
+	strncpy(nameMsg.fileName, fileName, fileNameSize + 1);
 
 	/* Set the message type FILE_NAME_TRANSFER_TYPE */
 	nameMsg.mtype = FILE_NAME_TRANSFER_TYPE;
@@ -187,7 +197,9 @@ void sendFileName(const char* fileName)
 
 	// starting 'sender' without recv running crashes here
 	msgsnd(msqid, &nameMsg, sizeof(fileNameMsg) - sizeof(long), 0);
-
+	
+	//ERROR CHECK
+	
 	std::cout << "filenmae message has been sent" << std::endl;
 }
 

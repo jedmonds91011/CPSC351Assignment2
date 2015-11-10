@@ -1,6 +1,10 @@
 # ignore the mp3 file i'm using
 The_LaTeX*
 EP346*
+*.pdf
+*.mp3
+BikewaysMap*
+
 # ignore executables
 sender
 recv
