@@ -4,6 +4,7 @@ EP346*
 *.pdf
 *.mp3
 BikewaysMap*
+*__recv
 
 # ignore executables
 sender
